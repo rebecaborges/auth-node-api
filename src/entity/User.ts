@@ -1,6 +1,6 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
@@ -8,8 +8,8 @@ import {
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn()
-  id?: number
+  @PrimaryColumn()
+  id!: string
 
   @Column({ unique: true })
   email!: string
@@ -17,11 +17,11 @@ export class User {
   @Column({ nullable: true })
   name!: string
 
-  @Column({ default: 'user' })
-  role!: string
-
   @Column({ default: false })
   isOnboarded!: boolean
+
+  @Column({ nullable: true })
+  role!: string
 
   @CreateDateColumn()
   createdAt?: Date

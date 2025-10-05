@@ -1,29 +1,16 @@
 import { Context } from 'koa'
-import { StatusCodes } from 'http-status-codes'
-import { DatabaseService } from '../services/databaseService'
-import { AuthRequestBody } from '../types/requests'
+import { signInOrRegisterService } from '../services/authService'
 import { createError } from '../middlewares/errorHandler'
+import { SignInOrRegisterBody } from '../interfaces/requests'
 
-export const signInOrRegister = async (ctx: Context) => {
+export async function signInOrRegister(ctx: Context) {
   try {
-    const { email, name } = ctx.request.body as AuthRequestBody
-    const existingUser = await DatabaseService.findUserByEmail(email)
-
-    if (!existingUser) {
-      await DatabaseService.createUser(email, name)
-      ctx.status = StatusCodes.CREATED
-      ctx.body = {
-        message: 'User created successfully',
-      }
-      return
-    }
-
-    ctx.status = StatusCodes.OK
-    ctx.body = {
-      message: 'User found, logged in successfully',
-    }
+    const tokens = await signInOrRegisterService(
+      ctx.request.body as SignInOrRegisterBody
+    )
+    ctx.body = tokens
   } catch (error) {
-    console.error(error)
-    throw createError.internalError('Error signing in or registering user!')
+    console.error('Error signing in or registering user:', error)
+    throw createError.internalError('Error signing in or registering user')
   }
 }

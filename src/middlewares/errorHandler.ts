@@ -1,9 +1,6 @@
 import { Context } from 'koa'
 import { StatusCodes, ReasonPhrases } from 'http-status-codes'
-
-export interface ApiError extends Error {
-  status?: number
-}
+import { ApiError } from '../interfaces/error'
 
 export class AppError extends Error implements ApiError {
   public status: number
@@ -23,9 +20,7 @@ export const errorHandler = async (
 ) => {
   try {
     await next()
-  } catch (err) {
-    console.error('Error caught by middleware:', err)
-
+  } catch (err: any) {
     if (err instanceof AppError) {
       ctx.status = err.status
       ctx.body = {
@@ -45,6 +40,10 @@ export const createError = {
     new AppError(message, StatusCodes.BAD_REQUEST),
   notFound: (message: string = ReasonPhrases.NOT_FOUND) =>
     new AppError(message, StatusCodes.NOT_FOUND),
+  unauthorized: (message: string = ReasonPhrases.UNAUTHORIZED) =>
+    new AppError(message, StatusCodes.UNAUTHORIZED),
+  forbidden: (message: string = ReasonPhrases.FORBIDDEN) =>
+    new AppError(message, StatusCodes.FORBIDDEN),
   internalError: (message: string = ReasonPhrases.INTERNAL_SERVER_ERROR) =>
-    new AppError(message, StatusCodes.INTERNAL_SERVER_ERROR)
+    new AppError(message, StatusCodes.INTERNAL_SERVER_ERROR),
 }

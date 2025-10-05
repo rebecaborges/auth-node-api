@@ -1,10 +1,19 @@
 import { Context, Next } from 'koa'
-import { isValidEmail } from '../utils/emailValidator'
 import { createError } from './errorHandler'
-import { AuthRequestBody } from '../types/requests'
+import { SignInOrRegisterBody } from '../interfaces/requests'
+
+export function isValidEmail(email: string): string {
+  if (!email || typeof email !== 'string') throw new Error('Email is required!')
+
+  const trimmedEmail = email.trim().toLowerCase()
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+  if (!emailRegex.test(trimmedEmail)) throw new Error('Invalid email!')
+  return trimmedEmail
+}
 
 export const validateEmail = async (ctx: Context, next: Next) => {
-  const body = ctx.request.body as AuthRequestBody
+  const body = ctx.request.body as SignInOrRegisterBody
   const { email } = body
 
   if (!email) {

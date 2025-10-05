@@ -2,7 +2,7 @@ export interface SignInOrRegisterBody {
   email: string
   password: string
   role: string
-  name?: string
+  name: string
 }
 
 export interface ListUsers {
@@ -13,6 +13,12 @@ export interface ListUsers {
 export interface UpdateUserData {
   email: string
   name?: string
+  role?: string
+}
+
+export interface ConfirmEmailBody {
+  email: string
+  code: string
 }
 
 export interface SignInRequestParameters {

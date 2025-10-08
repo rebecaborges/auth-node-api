@@ -6,21 +6,36 @@ services:
     container_name: auth-node-api
     restart: always
     ports:
-      - '3000:3000'
+      - "80:3000"
     depends_on:
       db:
         condition: service_started
-    volumes:
-      - .:/usr/src/app
-      - /usr/src/app/node_modules
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID}
+      COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID}
+      COGNITO_CLIENT_SECRET: ${COGNITO_CLIENT_SECRET}
+      AWS_REGION: ${AWS_REGION}
 
   db:
-    image: postgres:15
+    image: postgres:latest
     container_name: postgres_db
     restart: always
     environment:
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: mydatabase
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
-      - '5432:5432'
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+volumes:
+  pg_data:

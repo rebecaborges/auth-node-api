@@ -1,5 +1,8 @@
 import { Context, Next } from 'koa'
 import { createError } from './errorHandler'
+import { findUserByEmail } from '../services/userService'
+import { AppDataSource } from '../config/data-source'
+import { User } from '../entity/User'
 
 export async function requireAdmin(ctx: Context, next: Next) {
   const user = ctx.state.user
@@ -8,16 +11,29 @@ export async function requireAdmin(ctx: Context, next: Next) {
     throw createError.unauthorized('User not authenticated')
   }
 
-  const customRole = user['custom:role']
-  const cognitoGroups = user['cognito:groups'] || []
+  try {
+    const userRepository = AppDataSource.getRepository(User)
+    const dbUser = await userRepository.findOne({
+      where: { id: user.username }
+    })
 
-  const isAdmin = customRole === 'admin' || cognitoGroups.includes('admin')
+    if (!dbUser) {
+      throw createError.forbidden('User not found in database')
+    }
 
-  if (!isAdmin) {
-    throw createError.forbidden(
-      'Access denied! Only admins can access this route.'
-    )
+    if (dbUser.role !== 'admin') {
+      throw createError.forbidden(
+        'Access denied! Only admins can access this route.'
+      )
+    }
+
+    ctx.state.dbUser = dbUser
+    await next()
+  } catch (error: any) {
+    if (error.status) {
+      throw error
+    }
+    throw createError.internalError('Error verifying user permissions')
   }
-
-  await next()
 }
+

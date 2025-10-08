@@ -14,13 +14,13 @@ export class User {
   @Column({ unique: true })
   email!: string
 
-  @Column({ nullable: true })
+  @Column()
   name!: string
 
   @Column({ default: false })
   isOnboarded!: boolean
 
-  @Column({ nullable: true })
+  @Column({ nullable: false })
   role!: string
 
   @CreateDateColumn()

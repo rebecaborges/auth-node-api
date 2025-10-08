@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import { cognito, COGNITO_CONFIG } from '../config/cognito'
 import crypto from 'crypto'
-import { createUser } from './userService'
+import { createUser, findUserByEmail } from './userService'
 import { createError } from '../middlewares/errorHandler'
 import {
   SignInOrRegisterBody,
@@ -17,25 +17,25 @@ function calculateSecretHash(username: string): string {
 }
 
 export async function signInOrRegisterService(body: SignInOrRegisterBody) {
-  const { email, password, name, role } = body
+  const { email, password, name, role = 'user' } = body
 
+  console.log('email', email)
   if (!email || !password) {
     throw createError.badRequest('Email and password are required')
   }
 
   try {
-    const tokens = await signIn(email, password)
-    if (tokens) {
-      return tokens
-    }
-  } catch (err: any) {
-    if (err.code === 'UserNotFoundException') {
-      const signUpResponse = await signUp(email, password, role)
+    const user = await findUserByEmail(email)
+    if (user) {
+      return await signIn(email, password)
+    } else {
+      const signUpResponse = await signUp(email, password, role, name)
       const cognitoId = signUpResponse.userSub
       await createUser(cognitoId, email, role, name)
       return signUpResponse
     }
-    throw new Error(err.message || 'Error signing in or registering user')
+  } catch (error: any) {
+    throw new Error(error.message || 'Error signing in or registering user')
   }
 }
 
@@ -58,12 +58,47 @@ export async function signIn(email: string, password: string) {
       expiresIn: response.AuthenticationResult?.ExpiresIn,
       tokenType: response.AuthenticationResult?.TokenType,
     }
-  } catch {
-    throw new Error('Error signing in')
+  } catch (error: any) {
+    throw error
   }
 }
 
-export async function signUp(email: string, password: string, role: string) {
+async function addUserToGroup(username: string, groupName: string): Promise<boolean> {
+  const params = {
+    UserPoolId: COGNITO_CONFIG.USER_POOL_ID!,
+    Username: username,
+    GroupName: groupName
+  }
+
+  try {
+    await cognito.adminAddUserToGroup(params).promise()
+    return true
+  } catch (error: any) {
+
+    if (error.code === 'ResourceNotFoundException' || error.message.includes('does not exist')) {
+      try {
+        await cognito.createGroup({
+          UserPoolId: COGNITO_CONFIG.USER_POOL_ID!,
+          GroupName: groupName,
+          Description: `Group for ${groupName} users`
+        }).promise()
+
+        await cognito.adminAddUserToGroup(params).promise()
+        return true
+      } catch (createError: any) {
+        console.error(`Failed to create group ${groupName}:`, createError.message)
+        return false
+      }
+    }
+
+    return false
+  }
+}
+
+export async function signUp(email: string, password: string, role: string, name: string) {
+  if (!email || !password || !role || !name) {
+    throw createError.badRequest('Email, password, role and name are required!')
+  }
   const params: SignUpRequestParameters = {
     ClientId: COGNITO_CONFIG.CLIENT_ID!,
     Username: email,
@@ -71,19 +106,51 @@ export async function signUp(email: string, password: string, role: string) {
     SecretHash: calculateSecretHash(email),
     UserAttributes: [
       { Name: 'email', Value: email },
-      { Name: 'custom:role', Value: role },
+      { Name: 'name', Value: name },
     ],
   }
 
   try {
     const response = await cognito.signUp(params).promise()
 
+    const groupAdded = await addUserToGroup(email, role)
+    if (!groupAdded) {
+      throw createError.internalError('Failed to add user to group')
+    }
+    await createUser(response.UserSub, email, role, name)
+
     return {
       userSub: response.UserSub,
       userConfirmed: response.UserConfirmed,
       message: 'User registered successfully!',
     }
-  } catch {
-    throw new Error('Error registering user')
+  } catch (error: any) {
+    console.error('Cognito signUp error:', error)
+    throw new Error(error.message)
+  }
+}
+
+export async function confirmUser(email: string, code: string) {
+  if (!email || !code) {
+    throw createError.badRequest('Email and confirmation code are required')
+  }
+
+  const params = {
+    ClientId: COGNITO_CONFIG.CLIENT_ID!,
+    Username: email,
+    ConfirmationCode: code,
+    SecretHash: calculateSecretHash(email),
+  }
+
+  try {
+    await cognito.confirmSignUp(params).promise()
+
+    return {
+      message: 'User confirmed successfully!',
+      success: true,
+    }
+  } catch (error: any) {
+    console.error('Cognito confirmSignUp error:', error)
+    throw new Error(error.message || 'Error confirming user')
   }
 }

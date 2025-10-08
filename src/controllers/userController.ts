@@ -3,38 +3,67 @@ import { StatusCodes } from 'http-status-codes'
 import { listUsers } from '../services/listUsersService'
 import { updateUserAccount } from '../services/editAccountService'
 import { ListUsers, UpdateUserData } from '../interfaces/requests'
-import { findUserByEmail } from '../services/userService'
+import { findUserById } from '../services/userService'
+import { createError } from '../middlewares/errorHandler'
+
+export async function healthController(ctx: Context) {
+  ctx.status = StatusCodes.OK
+  ctx.body = {
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  }
+}
 
 export async function getMe(ctx: Context) {
   const userToken = ctx.state.user
+  const user = await findUserById(userToken.username)
 
-  const user = await findUserByEmail(userToken.email)
+  if (!user) {
+    throw createError.notFound('User not found')
+  }
+
   ctx.status = StatusCodes.OK
   ctx.body = {
     message: 'User information retrieved successfully',
     user: {
-      ...user,
       id: userToken.sub,
       username: userToken.username,
+      email: user.email,
+      name: user.name,
+      isOnboarded: user.isOnboarded,
+      role: user.role,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     },
   }
 }
 
 export async function editAccount(ctx: Context) {
-  const body = ctx.request.body as UpdateUserData
+  try {
+    const body = ctx.request.body as UpdateUserData
+    const cognitoUser = ctx.state.user
+    const result = await updateUserAccount(body, cognitoUser)
 
-  const result = await updateUserAccount(body)
-  ctx.status = StatusCodes.OK
-  ctx.body = result
+    ctx.status = StatusCodes.OK
+    ctx.body = result
+  } catch (error: any) {
+    throw createError.internalError(error.message || 'Error updating user information')
+  }
 }
 
-export async function listUsersController(ctx: Context) {
-  const { page, limit } = ctx.header as unknown as ListUsers
-  const users = await listUsers({ page, limit })
 
-  ctx.status = StatusCodes.OK
-  ctx.body = {
-    message: 'Users retrieved successfully',
-    users: users,
+export async function listUsersController(ctx: Context) {
+  try {
+    const { page, limit } = ctx.header as unknown as ListUsers
+    const users = await listUsers({ page, limit })
+
+    ctx.status = StatusCodes.OK
+    ctx.body = {
+      message: 'Users retrieved successfully',
+      users: users,
+    }
+  } catch (error: any) {
+    throw createError.internalError(error.message || 'Error listing users')
   }
 }

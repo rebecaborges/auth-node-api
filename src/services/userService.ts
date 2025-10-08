@@ -27,18 +27,33 @@ export async function createUser(
 export async function findUserByEmail(email: string) {
   try {
     const userRepository = AppDataSource.getRepository(User)
-    const user = await userRepository.findOne({ where: { email } })
+    const user = await userRepository.findOne({
+      where: { email }
+    })
     return user
   } catch (error) {
     console.error('Error finding user:', error)
-    throw createError.internalError('Error finding user!')
+    throw createError.internalError('User not found!')
+  }
+}
+
+export async function findUserById(id: string) {
+  try {
+    const userRepository = AppDataSource.getRepository(User)
+    const user = await userRepository.findOne({
+      where: { id }
+    })
+    return user
+  } catch (error) {
+    console.error('Error finding user:', error)
+    throw createError.internalError('User not found!')
   }
 }
 
 export async function updateUser(email: string, updates: Partial<User>) {
   try {
     const userRepository = AppDataSource.getRepository(User)
-    const user = await userRepository.findOne({ where: { email } })
+    const user = await findUserByEmail(email)
 
     if (!user) {
       throw createError.notFound('User not found')
@@ -47,7 +62,6 @@ export async function updateUser(email: string, updates: Partial<User>) {
     Object.assign(user, updates)
     return await userRepository.save(user)
   } catch (error) {
-    console.error('Error updating user:', error)
     throw createError.internalError('Error updating user!')
   }
 }

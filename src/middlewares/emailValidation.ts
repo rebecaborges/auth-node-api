@@ -25,7 +25,7 @@ export const validateEmail = async (ctx: Context, next: Next) => {
     ctx.state.normalizedEmail = normalizedEmail
     body.email = normalizedEmail
     await next()
-  } catch (error: any) {
+  } catch {
     throw createError.badRequest('Invalid email!')
   }
 }

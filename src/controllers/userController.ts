@@ -11,7 +11,7 @@ export async function healthController(ctx: Context) {
   ctx.body = {
     status: 'ok',
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    uptime: process.uptime(),
   }
 }
 
@@ -48,10 +48,11 @@ export async function editAccount(ctx: Context) {
     ctx.status = StatusCodes.OK
     ctx.body = result
   } catch (error: any) {
-    throw createError.internalError(error.message || 'Error updating user information')
+    throw createError.internalError(
+      error.message || 'Error updating user information'
+    )
   }
 }
-
 
 export async function listUsersController(ctx: Context) {
   try {

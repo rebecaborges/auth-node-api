@@ -28,7 +28,7 @@ export async function findUserByEmail(email: string) {
   try {
     const userRepository = AppDataSource.getRepository(User)
     const user = await userRepository.findOne({
-      where: { email }
+      where: { email },
     })
     return user
   } catch (error) {
@@ -41,7 +41,7 @@ export async function findUserById(id: string) {
   try {
     const userRepository = AppDataSource.getRepository(User)
     const user = await userRepository.findOne({
-      where: { id }
+      where: { id },
     })
     return user
   } catch (error) {
@@ -61,7 +61,7 @@ export async function updateUser(email: string, updates: Partial<User>) {
 
     Object.assign(user, updates)
     return await userRepository.save(user)
-  } catch (error) {
+  } catch {
     throw createError.internalError('Error updating user!')
   }
 }

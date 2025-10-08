@@ -19,21 +19,19 @@ function calculateSecretHash(username: string): string {
 export async function signInOrRegisterService(body: SignInOrRegisterBody) {
   const { email, password, name, role = 'user' } = body
 
-  console.log('email', email)
   if (!email || !password) {
     throw createError.badRequest('Email and password are required')
   }
 
   try {
     const user = await findUserByEmail(email)
-    if (user) {
-      return await signIn(email, password)
-    } else {
-      const signUpResponse = await signUp(email, password, role, name)
-      const cognitoId = signUpResponse.userSub
-      await createUser(cognitoId, email, role, name)
-      return signUpResponse
-    }
+    if (user) return await signIn(email, password)
+
+    const signUpResponse = await signUp(email, password, role, name)
+    const cognitoId = signUpResponse.userSub
+    await createUser(cognitoId, email, role, name)
+    return signUpResponse
+
   } catch (error: any) {
     throw new Error(error.message || 'Error signing in or registering user')
   }
@@ -49,44 +47,49 @@ export async function signIn(email: string, password: string) {
       SECRET_HASH: calculateSecretHash(email),
     },
   }
+  const response = await cognito.initiateAuth(params).promise()
 
-  try {
-    const response = await cognito.initiateAuth(params).promise()
-
-    return {
-      accessToken: response.AuthenticationResult?.AccessToken,
-      expiresIn: response.AuthenticationResult?.ExpiresIn,
-      tokenType: response.AuthenticationResult?.TokenType,
-    }
-  } catch (error: any) {
-    throw error
+  return {
+    accessToken: response.AuthenticationResult?.AccessToken,
+    expiresIn: response.AuthenticationResult?.ExpiresIn,
+    tokenType: response.AuthenticationResult?.TokenType,
   }
 }
 
-async function addUserToGroup(username: string, groupName: string): Promise<boolean> {
+async function addUserToGroup(
+  username: string,
+  groupName: string
+): Promise<boolean> {
   const params = {
     UserPoolId: COGNITO_CONFIG.USER_POOL_ID!,
     Username: username,
-    GroupName: groupName
+    GroupName: groupName,
   }
 
   try {
     await cognito.adminAddUserToGroup(params).promise()
     return true
   } catch (error: any) {
-
-    if (error.code === 'ResourceNotFoundException' || error.message.includes('does not exist')) {
+    if (
+      error.code === 'ResourceNotFoundException' ||
+      error.message.includes('does not exist')
+    ) {
       try {
-        await cognito.createGroup({
-          UserPoolId: COGNITO_CONFIG.USER_POOL_ID!,
-          GroupName: groupName,
-          Description: `Group for ${groupName} users`
-        }).promise()
+        await cognito
+          .createGroup({
+            UserPoolId: COGNITO_CONFIG.USER_POOL_ID!,
+            GroupName: groupName,
+            Description: `Group for ${groupName} users`,
+          })
+          .promise()
 
         await cognito.adminAddUserToGroup(params).promise()
         return true
       } catch (createError: any) {
-        console.error(`Failed to create group ${groupName}:`, createError.message)
+        console.error(
+          `Failed to create group ${groupName}:`,
+          createError.message
+        )
         return false
       }
     }
@@ -95,7 +98,12 @@ async function addUserToGroup(username: string, groupName: string): Promise<bool
   }
 }
 
-export async function signUp(email: string, password: string, role: string, name: string) {
+export async function signUp(
+  email: string,
+  password: string,
+  role: string,
+  name: string
+) {
   if (!email || !password || !role || !name) {
     throw createError.badRequest('Email, password, role and name are required!')
   }

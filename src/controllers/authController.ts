@@ -11,14 +11,16 @@ export async function signInOrRegister(ctx: Context) {
     ctx.body = tokens
   } catch (error: any) {
     console.error('Error signing in or registering user:', error)
-    throw createError.internalError(error.message || 'Error signing in or registering user')
+    throw createError.internalError(
+      error.message || 'Error signing in or registering user'
+    )
   }
 }
 
 export async function confirmEmail(ctx: Context) {
   try {
-    const { email, code } = ctx.request.body as { email: string, code: string }
-    
+    const { email, code } = ctx.request.body as { email: string; code: string }
+
     const result = await confirmUser(email, code)
     ctx.body = result
   } catch (error: any) {

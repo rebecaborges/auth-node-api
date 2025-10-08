@@ -1,8 +1,6 @@
 import { Context, Next } from 'koa'
 import { createError } from './errorHandler'
-import { findUserByEmail } from '../services/userService'
-import { AppDataSource } from '../config/data-source'
-import { User } from '../entity/User'
+import { findUserById } from '../services/userService'
 
 export async function requireAdmin(ctx: Context, next: Next) {
   const user = ctx.state.user
@@ -12,10 +10,7 @@ export async function requireAdmin(ctx: Context, next: Next) {
   }
 
   try {
-    const userRepository = AppDataSource.getRepository(User)
-    const dbUser = await userRepository.findOne({
-      where: { id: user.username }
-    })
+    const dbUser = await findUserById(user.username)
 
     if (!dbUser) {
       throw createError.forbidden('User not found in database')
@@ -36,4 +31,3 @@ export async function requireAdmin(ctx: Context, next: Next) {
     throw createError.internalError('Error verifying user permissions')
   }
 }
-

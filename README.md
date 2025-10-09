@@ -72,7 +72,7 @@ docker-compose up
 # ou
 make up
 
-# Inicializar o banco 
+# Inicializar o banco
 docker-compose up db
 # ou
 make up-db
@@ -96,16 +96,15 @@ make up-app
 
 A collection já está configurada com as seguintes variáveis:
 
-| Variável | Descrição |
-|----------|-----------|
-| `baseUrl` | URL base da API |
-| `email` | Email para testes |
-| `password` | Senha para testes |
-| `name` | Nome do usuário |
-| `code` | Código de confirmação enviado por email |
-| `role` | Role do usuário (user/admin) |
-| `token` | Token de acesso (preenchido automaticamente) |
-
+| Variável   | Descrição                                    |
+| ---------- | -------------------------------------------- |
+| `baseUrl`  | URL base da API                              |
+| `email`    | Email para testes                            |
+| `password` | Senha para testes                            |
+| `name`     | Nome do usuário                              |
+| `code`     | Código de confirmação enviado por email      |
+| `role`     | Role do usuário (user/admin)                 |
+| `token`    | Token de acesso (preenchido automaticamente) |
 
 ## 🔗 Endpoints da API
 
@@ -116,6 +115,7 @@ A collection já está configurada com as seguintes variáveis:
 Verifica se a API está funcionando.
 
 **Resposta:**
+
 ```json
 {
   "status": "ok",
@@ -130,6 +130,7 @@ Verifica se a API está funcionando.
 Registra um novo usuário ou faz login de um usuário existente.
 
 **Body:**
+
 ```json
 {
   "email": "usuario@exemplo.com",
@@ -140,6 +141,7 @@ Registra um novo usuário ou faz login de um usuário existente.
 ```
 
 **Resposta de Sucesso:**
+
 ```json
 {
   "accessToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -156,6 +158,7 @@ Registra um novo usuário ou faz login de um usuário existente.
 Confirma o email do usuário usando o código enviado por email.
 
 **Body:**
+
 ```json
 {
   "email": "usuario@exemplo.com",
@@ -164,6 +167,7 @@ Confirma o email do usuário usando o código enviado por email.
 ```
 
 **Resposta:**
+
 ```json
 {
   "message": "Email confirmed successfully"
@@ -177,11 +181,13 @@ Confirma o email do usuário usando o código enviado por email.
 Retorna informações do usuário autenticado.
 
 **Headers:**
+
 ```
 Authorization: Bearer {accessToken}
 ```
 
 **Resposta:**
+
 ```json
 {
   "id": "123e4567-e89b-12d3-a456-426614174000",
@@ -200,15 +206,18 @@ Authorization: Bearer {accessToken}
 Lista todos os usuários (apenas para administradores).
 
 **Headers:**
+
 ```
 Authorization: Bearer {accessToken}
 ```
 
 **Query Parameters:**
+
 - `page`: Número da página (padrão: 1)
 - `limit`: Limite de itens por página (padrão: 10)
 
 **Resposta:**
+
 ```json
 {
   "users": [
@@ -237,12 +246,14 @@ Authorization: Bearer {accessToken}
 Edita informações da conta do usuário autenticado.
 
 **Headers:**
+
 ```
 Authorization: Bearer {accessToken}
 Content-Type: application/json
 ```
 
 **Body:**
+
 ```json
 {
   "email": "novoemail@exemplo.com",
@@ -252,6 +263,7 @@ Content-Type: application/json
 ```
 
 **Resposta:**
+
 ```json
 {
   "message": "Account updated successfully",

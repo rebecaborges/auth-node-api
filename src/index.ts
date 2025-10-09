@@ -26,4 +26,8 @@ async function startApi() {
   }
 }
 
-startApi()
+if (process.env.NODE_ENV !== 'test') {
+  startApi()
+}
+
+export default app

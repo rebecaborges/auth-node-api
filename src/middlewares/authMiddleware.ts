@@ -20,7 +20,7 @@ export async function verifyAccessToken(ctx: Context, next: Next) {
   if (!authHeader) {
     ctx.status = 401
     ctx.body = { message: 'Token not provided' }
-    return
+    throw new Error('Token not provided')
   }
 
   const token = authHeader.split(' ')[1]

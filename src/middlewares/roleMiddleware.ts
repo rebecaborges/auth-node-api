@@ -25,7 +25,7 @@ export async function requireAdmin(ctx: Context, next: Next) {
     ctx.state.dbUser = dbUser
     await next()
   } catch (error: any) {
-    if (error.status) {
+    if (error && error.status) {
       throw error
     }
     throw createError.internalError('Error verifying user permissions')

@@ -66,7 +66,8 @@ async function updateCognitoGroup(email: string, newRole: string | undefined) {
       })
       .promise()
   } catch (error: any) {
-    console.error('Failed to update user group in Cognito:', error.message)
-    throw new Error(`Failed to update user role in Cognito: ${error.message}`)
+    const errorMessage = error?.message || error?.toString() || 'Unknown error'
+    console.error('Failed to update user group in Cognito:', errorMessage)
+    throw new Error(`Failed to update user role in Cognito: ${errorMessage}`)
   }
 }

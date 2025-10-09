@@ -31,9 +31,11 @@ export async function signInOrRegisterService(body: SignInOrRegisterBody) {
     const cognitoId = signUpResponse.userSub
     await createUser(cognitoId, email, role, name)
     return signUpResponse
-
   } catch (error: any) {
-    throw new Error(error.message || 'Error signing in or registering user')
+    if (error.message) {
+      throw error
+    }
+    throw new Error('Error signing in or registering user')
   }
 }
 
@@ -56,7 +58,7 @@ export async function signIn(email: string, password: string) {
   }
 }
 
-async function addUserToGroup(
+export async function addUserToGroup(
   username: string,
   groupName: string
 ): Promise<boolean> {
@@ -152,7 +154,6 @@ export async function confirmUser(email: string, code: string) {
 
   try {
     await cognito.confirmSignUp(params).promise()
-
     return {
       message: 'User confirmed successfully!',
       success: true,

@@ -8,7 +8,9 @@ export function isValidEmail(email: string): string {
   const trimmedEmail = email.trim().toLowerCase()
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-  if (!emailRegex.test(trimmedEmail)) throw new Error('Invalid email!')
+  if (!emailRegex.test(trimmedEmail)) {
+    throw new Error(`Invalid email format: ${email}`)
+  }
   return trimmedEmail
 }
 
@@ -25,7 +27,10 @@ export const validateEmail = async (ctx: Context, next: Next) => {
     ctx.state.normalizedEmail = normalizedEmail
     body.email = normalizedEmail
     await next()
-  } catch {
-    throw createError.badRequest('Invalid email!')
+  } catch (error: any) {
+    if (error.status) {
+      throw error
+    }
+    throw createError.badRequest(error.message || 'Invalid email!')
   }
 }

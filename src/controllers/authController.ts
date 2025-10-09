@@ -11,6 +11,36 @@ export async function signInOrRegister(ctx: Context) {
     ctx.body = tokens
   } catch (error: any) {
     console.error('Error signing in or registering user:', error)
+
+    if (
+      error.code === 'UserNotConfirmedException' ||
+      error.message === 'User is not confirmed.'
+    ) {
+      throw createError.badRequest('User is not confirmed!')
+    }
+
+    if (
+      error.code === 'NotAuthorizedException' ||
+      error.message === 'Incorrect username or password.'
+    ) {
+      throw createError.unauthorized('Incorrect username or password!')
+    }
+
+    if (
+      error.code === 'UserNotFoundException' ||
+      error.message === 'User does not exist.'
+    ) {
+      throw createError.notFound('User does not exist!')
+    }
+
+    if (error.code === 'InvalidPasswordException') {
+      throw createError.badRequest('Invalid password!')
+    }
+
+    if (error.code === 'UsernameExistsException') {
+      throw createError.badRequest('User already exists!')
+    }
+
     throw createError.internalError(
       error.message || 'Error signing in or registering user'
     )
